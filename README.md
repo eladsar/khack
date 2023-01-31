@@ -1,0 +1,2 @@
+# khack
+AI hackathon repo
