@@ -42,3 +42,11 @@ response = model.ask("Hello world")
 ## Train a model with the openai tool
 
 
+## Important Remarks
+1. The openai API holds a queue for fine-tune models. 
+It takes approximately 1/2 to start your training.
+2. The python API for fine-tune is not yet complete
+so it is better to use the openai bash scripts
+3. It is better to apply some basic heuristics to filter the data
+in order to avoid running out of tokens.
+
