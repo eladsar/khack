@@ -26,6 +26,11 @@ class OpenAI:
         openai.api_key = api_key
         openai.organization = organization_id
 
+    def file_list(self):
+        return openai.File.list()
+
+
+
     def retrieve(self, model=None):
         if model is None:
             model = self.model

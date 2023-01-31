@@ -38,3 +38,7 @@ model = OpenAI()
 
 response = model.ask("Hello world")
 ```
+
+## Train a model with the openai tool
+
+
