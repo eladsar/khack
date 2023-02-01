@@ -86,7 +86,7 @@ class OpenAI:
         :param n_words: number of words to summarize the text into
         :param n_paragraphs:   number of paragraphs to summarize the text into
         :param kwargs: additional arguments for the ask function
-        :return:
+        :return: summary
         """
         if n_paragraphs is None:
             prompt = f"Task: summarize the following text into {n_words} words\nText: {text}\nResponse:"
