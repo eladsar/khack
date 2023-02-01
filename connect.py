@@ -80,6 +80,14 @@ class OpenAI:
         return response
 
     def summary(self, text, n_words=100, n_paragraphs=None, **kwargs):
+        """
+        Summarize a text
+        :param text:
+        :param n_words:
+        :param n_paragraphs:
+        :param kwargs:
+        :return:
+        """
         if n_paragraphs is None:
             prompt = f"Task: summarize the following text into {n_words} words\nText: {text}\nResponse:"
         else:
