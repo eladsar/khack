@@ -133,10 +133,9 @@ class OpenAI:
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text.lower().strip()
-        if res == "yes":
-            return True
-        else:
-            return False
+
+        i = pd.Series(['no', 'yes']).apply(partial(get_edit_ratio, s2=res)).idxmax()
+        return bool(i)
 
     def classify(self, text, classes, **kwargs):
         """
@@ -239,7 +238,7 @@ class OpenAI:
         res = res.choices[0].text.lower().strip()
         return res
 
-
+    #
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
