@@ -82,10 +82,10 @@ class OpenAI:
     def summary(self, text, n_words=100, n_paragraphs=None, **kwargs):
         """
         Summarize a text
-        :param text:
-        :param n_words:
-        :param n_paragraphs:
-        :param kwargs:
+        :param text:  text to summarize
+        :param n_words: number of words to summarize the text into
+        :param n_paragraphs:   number of paragraphs to summarize the text into
+        :param kwargs: additional arguments for the ask function
         :return:
         """
         if n_paragraphs is None:
