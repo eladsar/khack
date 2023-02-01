@@ -24,7 +24,7 @@ To run a remote interpreter, go to `File -> Settings -> Project -> Project Inter
 select `Add Remote` and fill in the following details:
 
 ```bash
-Host: 192.169.10.45
+Host: 192.168.10.45
 Port: 46622
 python interpreter path: /opt/conda/bin/python
 ```

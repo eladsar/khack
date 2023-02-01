@@ -4,6 +4,16 @@ import openai
 import json
 import pathlib
 import numpy as np
+import Levenshtein as lev
+from Levenshtein import ratio
+from functools import partial
+
+def get_edit_ratio(s1, s2):
+    return lev.ratio(s1, s2)
+
+
+def get_edit_distance(s1, s2):
+    return lev.distance(s1, s2)
 
 
 class OpenAI:
@@ -78,6 +88,127 @@ class OpenAI:
         )
 
         return response
+
+    def summary(self, text, n_words=100, n_paragraphs=None, **kwargs):
+        """
+        Summarize a text
+        :param text:  text to summarize
+        :param n_words: number of words to summarize the text into
+        :param n_paragraphs:   number of paragraphs to summarize the text into
+        :param kwargs: additional arguments for the ask function
+        :return: summary
+        """
+        if n_paragraphs is None:
+            prompt = f"Task: summarize the following text into {n_words} words\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+        else:
+            prompt = f"Task: summarize the following text into {n_paragraphs} paragraphs\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        return res.choices[0].text
+
+    def question(self, text, question, **kwargs):
+        """
+        Answer a yes-no question
+        :param text: text to answer the question from
+        :param question: question to answer
+        :param kwargs: additional arguments for the ask function
+        :return: answer
+        """
+        prompt = f"Task: answer the following question\nText: {text}\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+
+        return res
+
+    def yes_or_no(self, text, question, **kwargs):
+        """
+        Answer a yes or no question
+        :param text: text to answer the question from
+        :param question:  question to answer
+        :param kwargs: additional arguments for the ask function
+        :return: answer
+        """
+        prompt = f"Text: {text}\nTask: answer the following question with yes or no\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text.lower().strip()
+        if res == "yes":
+            return True
+        else:
+            return False
+
+    def classify(self, text, classes, **kwargs):
+        """
+        Classify a text
+        :param text: text to classify
+        :param classes: list of classes
+        :param kwargs: additional arguments for the ask function
+        :return: class
+        """
+        prompt = f"Task: classify the following text into one of the following classes\nText: {text}\nClasses: {classes}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+        res = res.lower().strip()
+
+        i = pd.Series(classes).str.lower().str.strip().apply(partial(get_edit_ratio, s2=res)).idxmax()
+
+        return classes[i]
+
+    def entities(self, text, humans=True, **kwargs):
+        """
+        Extract entities from a text
+        :param humans:  if True, extract people, else extract all entities
+        :param text: text to extract entities from
+        :param kwargs: additional arguments for the ask function
+        :return: entities
+        """
+        if humans:
+            prompt = f"Task: extract people from the following text in a comma separated list\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+        else:
+            prompt = f"Task: extract entities from the following text in a comma separated list\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+
+        entities = res.choices[0].text.split(',')
+        entities = [e.lower().strip() for e in entities]
+
+        return entities
+
+    def title(self, text, **kwargs):
+        """
+        Extract title from a text
+        :param text: text to extract title from
+        :param kwargs: additional arguments for the ask function
+        :return: title
+        """
+        prompt = f"Task: extract title from the following text\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+
+        return res
+
+    def similar_keywords(self, text, keywords, **kwargs):
+        """
+        Find similar keywords to a list of keywords
+        :param text: text to find similar keywords from
+        :param keywords: list of keywords
+        :param kwargs: additional arguments for the ask function
+        :return: list of similar keywords
+        """
+
+        keywords = [e.lower().strip() for e in keywords]
+        prompt = f"Keywords: {keywords}\nTask: find similar keywords in the following text\nText: {text}\n\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text.split(',')
+        res = [e.lower().strip() for e in res]
+
+        res = list(set(res) - set(keywords))
+
+        return res
 
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
