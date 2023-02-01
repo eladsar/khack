@@ -79,6 +79,15 @@ class OpenAI:
 
         return response
 
+    def summary(self, text, n_words=100, n_paragraphs=None, **kwargs):
+        if n_paragraphs is None:
+            prompt = f"Task: summarize the following text into {n_words} words\nText: {text}\nResponse:"
+        else:
+            prompt = f"Task: summarize the following text into {n_paragraphs} paragraphs\nText: {text}\nResponse:"
+
+        res = self.ask(prompt, **kwargs)
+        return res.choices[0].text
+
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
