@@ -2,6 +2,7 @@ from hillary_mails import HillaryQueryScore, HillaryEmails
 from connect import OpenAI
 from tqdm import tqdm
 
+ui_columns = ['DocNumber', 'MetadataFrom', 'MetadataTo', 'MetadataSubject', 'RawText', 'paragraphs', 'title', 'score']
 
 class Retrieve(object):
     def __init__(self):
@@ -21,3 +22,8 @@ class Retrieve(object):
         df['title'] = titles
 
         return df
+
+    def query2ui(self, query, top_n=10):
+        df = self.query(query, top_n)
+        df = df[ui_columns]
+        return df.to_json(orient='records')
