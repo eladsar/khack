@@ -210,6 +210,36 @@ class OpenAI:
 
         return res
 
+    def is_keyword_found(self, text, keywords, **kwargs):
+        """
+        chek if one or more key words found in given text
+        :param text: text to looks for
+        :param keywords:  key words list
+        :param kwargs: additional arguments for the ask function
+        :return: yes if one of the keywords found else no
+        """
+        prompt = f"Text: {text}\nTask: answer with yes or no if Text contains one of the keywords \nKeywords: {keywords}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text.lower().strip().replace('"', "")
+
+        i = pd.Series(['no', 'yes']).apply(partial(get_edit_ratio, s2=res)).idxmax()
+        return bool(i)
+
+    def get_similar_terms(self, keywords, **kwargs):
+        """
+        chek if one or more key words found in given text
+        :param keywords:  key words list
+        :param kwargs: additional arguments for the ask function
+        :return: similar terms
+        """
+        prompt = f"keywords: {keywords}\nTask: return all semantic terms for given Keywords \nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text.lower().strip()
+        return res
+
+
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
