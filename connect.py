@@ -96,6 +96,25 @@ class OpenAI:
         res = self.ask(prompt, **kwargs)
         return res.choices[0].text
 
+    def entities(self, text, humans=True, **kwargs):
+        """
+        Extract entities from a text
+        :param humans:  if True, extract people, else extract all entities
+        :param text: text to extract entities from
+        :param kwargs: additional arguments for the ask function
+        :return: entities
+        """
+        if humans:
+            prompt = f"Task: extract people from the following text in a comma separated list\nText: {text}\nResponse:"
+        else:
+            prompt = f"Task: extract entities from the following text in a comma separated list\nText: {text}\nResponse:"
+
+        res = self.ask(prompt, **kwargs)
+
+        entities = res.choices[0].text.split(',')
+
+        return entities
+
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
