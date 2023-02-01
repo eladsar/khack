@@ -172,6 +172,7 @@ class OpenAI:
         res = self.ask(prompt, **kwargs)
 
         entities = res.choices[0].text.split(',')
+        entities = [e.lower().strip() for e in entities]
 
         return entities
 
