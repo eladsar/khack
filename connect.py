@@ -190,6 +190,26 @@ class OpenAI:
 
         return res
 
+    def similar_keywords(self, text, keywords, **kwargs):
+        """
+        Find similar keywords to a list of keywords
+        :param text: text to find similar keywords from
+        :param keywords: list of keywords
+        :param kwargs: additional arguments for the ask function
+        :return: list of similar keywords
+        """
+
+        keywords = [e.lower().strip() for e in keywords]
+        prompt = f"Keywords: {keywords}\nTask: find similar keywords in the following text\nText: {text}\n\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text.split(',')
+        res = [e.lower().strip() for e in res]
+
+        res = list(set(res) - set(keywords))
+
+        return res
+
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
