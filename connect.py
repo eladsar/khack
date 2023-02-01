@@ -133,7 +133,7 @@ class OpenAI:
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text.lower().strip()
-        if res == "yes":
+        if "yes" in res:
             return True
         else:
             return False
@@ -168,6 +168,24 @@ class OpenAI:
             prompt = f"Task: extract people from the following text in a comma separated list\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
         else:
             prompt = f"Task: extract entities from the following text in a comma separated list\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+
+        entities = res.choices[0].text.split(',')
+        entities = [e.lower().strip() for e in entities]
+
+        return entities
+
+    def mail_entities(self, text, **kwargs):
+        """
+        Extract entities from a text
+        :param humans:  if True, extract people, else extract all entities
+        :param text: text to extract entities from
+        :param kwargs: additional arguments for the ask function
+        :return: entities
+        """
+
+        prompt = f"Task: extract receiver then sender and then other from the following mail text in a comma separated list \nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
 
