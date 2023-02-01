@@ -2,7 +2,8 @@ from hillary_mails import HillaryQueryScore, HillaryEmails
 from connect import OpenAI
 from tqdm import tqdm
 
-ui_columns = ['DocNumber', 'MetadataFrom', 'MetadataTo', 'MetadataSubject', 'RawText', 'paragraphs', 'title', 'score']
+# ui_columns = ['DocNumber', 'MetadataFrom', 'MetadataTo', 'MetadataSubject', 'RawText', 'paragraphs', 'title', 'score']
+ui_columns = ['DocNumber', 'paragraphs', 'title', 'score']
 
 class Retrieve(object):
     def __init__(self):
