@@ -29,8 +29,6 @@ class OpenAI:
     def file_list(self):
         return openai.File.list()
 
-
-
     def retrieve(self, model=None):
         if model is None:
             model = self.model
