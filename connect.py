@@ -4,6 +4,16 @@ import openai
 import json
 import pathlib
 import numpy as np
+import Levenshtein as lev
+from Levenshtein import ratio
+from functools import partial
+
+def get_edit_ratio(s1, s2):
+    return lev.ratio(s1, s2)
+
+
+def get_edit_distance(s1, s2):
+    return lev.distance(s1, s2)
 
 
 class OpenAI:
@@ -95,6 +105,56 @@ class OpenAI:
 
         res = self.ask(prompt, **kwargs)
         return res.choices[0].text
+
+    def question(self, text, question, **kwargs):
+        """
+        Answer a yes-no question
+        :param text: text to answer the question from
+        :param question: question to answer
+        :param kwargs: additional arguments for the ask function
+        :return: answer
+        """
+        prompt = f"Task: answer the following question\nText: {text}\nQuestion: {question}\nResponse:"
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+
+        return res
+
+    def yes_or_no(self, text, question, **kwargs):
+        """
+        Answer a yes or no question
+        :param text: text to answer the question from
+        :param question:  question to answer
+        :param kwargs: additional arguments for the ask function
+        :return: answer
+        """
+        prompt = f"Text: {text}\nTask: answer the following question with yes or no\nQuestion: {question}\nResponse:"
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text.lower().strip()
+        if res == "yes":
+            return True
+        else:
+            return False
+
+    def classify(self, text, classes, **kwargs):
+        """
+        Classify a text
+        :param text: text to classify
+        :param classes: list of classes
+        :param kwargs: additional arguments for the ask function
+        :return: class
+        """
+        prompt = f"Task: classify the following text into one of the following classes\nText: {text}\nClasses: {classes}\nResponse:"
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+        res = res.lower().strip()
+
+        i = pd.Series(classes).str.lower().str.strip().apply(partial(get_edit_ratio, s2=res)).idxmax()
+
+        return classes[i]
 
     def entities(self, text, humans=True, **kwargs):
         """
