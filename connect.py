@@ -99,9 +99,9 @@ class OpenAI:
         :return: summary
         """
         if n_paragraphs is None:
-            prompt = f"Task: summarize the following text into {n_words} words\nText: {text}\nResponse:"
+            prompt = f"Task: summarize the following text into {n_words} words\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
         else:
-            prompt = f"Task: summarize the following text into {n_paragraphs} paragraphs\nText: {text}\nResponse:"
+            prompt = f"Task: summarize the following text into {n_paragraphs} paragraphs\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
         return res.choices[0].text
@@ -114,7 +114,7 @@ class OpenAI:
         :param kwargs: additional arguments for the ask function
         :return: answer
         """
-        prompt = f"Task: answer the following question\nText: {text}\nQuestion: {question}\nResponse:"
+        prompt = f"Task: answer the following question\nText: {text}\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text
@@ -129,7 +129,7 @@ class OpenAI:
         :param kwargs: additional arguments for the ask function
         :return: answer
         """
-        prompt = f"Text: {text}\nTask: answer the following question with yes or no\nQuestion: {question}\nResponse:"
+        prompt = f"Text: {text}\nTask: answer the following question with yes or no\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text.lower().strip()
@@ -146,7 +146,7 @@ class OpenAI:
         :param kwargs: additional arguments for the ask function
         :return: class
         """
-        prompt = f"Task: classify the following text into one of the following classes\nText: {text}\nClasses: {classes}\nResponse:"
+        prompt = f"Task: classify the following text into one of the following classes\nText: {text}\nClasses: {classes}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text
@@ -165,9 +165,9 @@ class OpenAI:
         :return: entities
         """
         if humans:
-            prompt = f"Task: extract people from the following text in a comma separated list\nText: {text}\nResponse:"
+            prompt = f"Task: extract people from the following text in a comma separated list\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
         else:
-            prompt = f"Task: extract entities from the following text in a comma separated list\nText: {text}\nResponse:"
+            prompt = f"Task: extract entities from the following text in a comma separated list\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
 
