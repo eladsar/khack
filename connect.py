@@ -239,7 +239,7 @@ class OpenAI:
         res = res.choices[0].text.lower().strip()
         return res
 
-
+    #
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
