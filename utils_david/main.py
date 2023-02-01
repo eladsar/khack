@@ -33,15 +33,15 @@ def add_question_func(list_of_questions):
         q['question_func'] = get_question_func(q=q)
 
 if __name__ == '__main__':
-    # mails = get_data()
-    # test_mail = mails.iloc[100]
-    # my_flow = Flow("Enron_investigation")
     question1 = {"type": QuestionsType.YESNO, "question": 'Does the text suggest criminal activity', 'next_step': YesNoNextStep}
     question2 = {"type": QuestionsType.YESNO, "question": 'Does the enron stock mentioned?', 'next_step': YesNoNextStep}
     question3 = {"type": QuestionsType.YESNO, "question": 'Does the text mention hiding or destroying documents?', 'next_step': YesNoNextStep}
     question4 = {"type": QuestionsType.MAIL_ENTITIES, 'next_step': MailEntitiesNextStep}
-    # questions = [question1, question2, question3]
-    # add_question_func(questions)
-    text = "Let's make sure that we don't get caught for this accounting fraud."
-    chat = OpenAI(api_key=Flow.get_token_from_path(Path(ROOT)))
-    res = chat.yes_or_no(text, "Does the text suggest criminal activity")
+    questions = [question1, question2, question3, question4]
+    add_question_func(questions)
+    # mails = get_data()
+    # raise Exception
+    test_mail = pd.read_csv('test_mail.csv')[0:10]
+    my_flow = Flow.from_questions("enron_investigation", questions)
+    my_flow.build_flow()
+    my_flow.start(test_mail)
