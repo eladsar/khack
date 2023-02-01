@@ -8,6 +8,7 @@ hillary_paragraphs_path = '/home/hackathon_2023/ron/hillary_paragraph_embedded.f
 
 queries = ['Benghazi attack']
 
+
 class HillaryEmails:
     def __init__(self, src_path=None):
         if src_path is None:

@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from src.contriever import Contriever
+from contriever.src.contriever import Contriever
 from transformers import AutoTokenizer
 
 contriever = Contriever.from_pretrained("facebook/contriever")
