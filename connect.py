@@ -176,6 +176,20 @@ class OpenAI:
 
         return entities
 
+    def title(self, text, **kwargs):
+        """
+        Extract title from a text
+        :param text: text to extract title from
+        :param kwargs: additional arguments for the ask function
+        :return: title
+        """
+        prompt = f"Task: extract title from the following text\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+
+        return res
+
     def build_dataset(self, data=None, question=None, answer=None, path=None) -> object:
         """
         Build a dataset for training a model
