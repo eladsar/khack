@@ -34,7 +34,7 @@ class Flow:
             self.responses_path.mkdir(parents=True, exist_ok=True)
         self.name = name  # id or nam of the flow
         if open_ai is None:
-            self.client = OpenAI(model='ada', api_key=self.get_token_from_path(Path(ROOT)))
+            self.client = OpenAI(api_key=self.get_token_from_path(Path(ROOT)))
         else:
             self.client = open_ai
 

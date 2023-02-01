@@ -50,12 +50,15 @@ class Map:
         # res = process_multi(partial(self.func, question=self.question['question']), self.data, run_type='map')
 
         agg_results = []
+        if self.data.empty:
+            logger.info(f'The Data is empty for question: {self.question["question"]}\nExit process')
+            exit(0)
         for idx, row in tqdm(self.data.iterrows()):
             tmp_res = self.client.yes_or_no(question=self.question['question'], text=row['body'])
             agg_results.append(tmp_res)
         # stay only with yes answer
-        res = [i for i in agg_results if i=='yes']
-        path_to_agg_answer = self.question['path'] /  self.question['id']
+        res = [i for i, val in enumerate(agg_results) if val]
+        path_to_agg_answer = self.question['path'] /  (self.question['id'].hex + '.pkl')
         Map.write_response(path_to_agg_answer, res)
         return path_to_agg_answer
 
@@ -63,7 +66,7 @@ class Map:
         # res = process_multi(self.func, self.data, run_type='map')
         agg_results = []
         for idx, row in self.data.iterrows():
-            tmp_res = self.client.mail_entities(question=self.question['question'], text=row['body'])
+            tmp_res = self.client.mail_entities(text=row['body'])
             agg_results.append(tmp_res)
         final_res = ','.join(agg_results)
         path_to_agg_answer = self.question['path'] / self.question['id']
@@ -72,14 +75,16 @@ class Map:
         if self.arg[0] is None:
             pass
         else:
-            if isinstance(self.arg, Path):
-                df = Map.read_response(self.arg)
+            if isinstance(self.arg[0], Path):
+                df = Map.read_response(self.arg[0])
                 if isinstance(df, list):
-                    self.data = self.data[df]
-                if isinstance(df, str):
+                    if len(df) == 0:
+                        return
+                    self.data = self.data.iloc[df]
+                elif isinstance(df, str):
                     self.arg = df
             else:
-                logger.info('parse_arg case not implemented')
+                logger.error('parse_arg case not implemented')
                 raise Exception
     @staticmethod
     def write_response(path, data):
@@ -87,11 +92,11 @@ class Map:
         try:
             if type(data).__name__ !='string':
                 data = pickle.dumps(data)
-            with open(path, 'wb') as w:
-                res = w.write(data)
+            with open(path , 'wb') as w:
+                w.write(data)
         except Exception as ex:
             logger.error(f'failed to write response, error {ex}')
-        return res
+
 
     @staticmethod
     def read_response(path):
