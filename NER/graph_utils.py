@@ -5,6 +5,12 @@ import networkx as nx
 from cdlib.algorithms import louvain
 import difflib
 from tqdm import tqdm
+from bokeh.io import output_notebook, show, save
+from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, Scatter
+from bokeh.plotting import figure
+from bokeh.plotting import from_networkx
+from bokeh.models import ColumnDataSource, CategoricalColorMapper, CategoricalMarkerMapper
+from bokeh.palettes import RdBu3
 
 def responses_to_flattened_lists(responses, valid_keys):
     responses_chained = []
@@ -81,4 +87,41 @@ def remove_duplicates(G):
             if u in contracted_graph.nodes and v in contracted_graph.nodes:
                 contracted_graph = nx.contracted_nodes(contracted_graph, u, v)
 
+
     return contracted_graph
+
+def draw_bokeh_graph(G, title):
+
+    # Choose a title!
+    communities = list(chain.from_iterable(louvain(G).communities))
+    G = G.subgraph(communities)
+
+    #     Establish which categories will appear when hovering over each node
+    HOVER_TOOLTIPS = [("Name", "@index"), ("type", "@node_type")]
+
+    # Create a plot — set dimensions, toolbar, and title
+    plot = figure(tooltips=HOVER_TOOLTIPS,
+                  tools="pan,wheel_zoom,save,reset", active_scroll='wheel_zoom',
+                  x_range=Range1d(-10.1, 10.1), y_range=Range1d(-10.1, 10.1), title=title)
+
+    # Create a network graph object with spring layout
+    # https://networkx.github.io/documentation/networkx-1.9/reference/generated/networkx.drawing.layout.spring_layout.html
+    network_graph = from_networkx(G, nx.spring_layout, scale=10, center=(0, 0))
+    node_types = [G.nodes[node]['node_type'] for node in G.nodes]
+    color_mapper = CategoricalColorMapper(factors=['0', '1', '2', '3', '4', '5', '6'],
+                                          palette=['blue', 'red', 'green', 'yellow', 'orange', 'purple', 'brown'])
+    color = {'field': 'community', 'transform': color_mapper}
+    marker_mapper = CategoricalMarkerMapper(factors=['People', 'Organizations', 'Locations'],
+                                            markers=['circle', 'diamond', 'square'])
+    marker = {'field': 'node_type', 'transform': marker_mapper}
+
+    # Set node size and color
+    network_graph.node_renderer.glyph = Scatter(size=15, marker=marker, fill_color=color)
+
+    # Set edge opacity and width
+    network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.5, line_width=1)
+
+    # Add network graph to the plot
+    plot.renderers.append(network_graph)
+
+    save(plot, filename=f"{title}.html")
