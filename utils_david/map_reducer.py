@@ -105,7 +105,7 @@ class Map:
         # else:
         #     self.data['precedent_question'] = agg_results
         path_to_agg_answer = self.question['path'] / (self.question['id'].hex + '.pkl')
-        logger.warning(f'Those are mail entities you search {["kenneth lay"]}, and mail index to check {agg_results_mail_index}')
+        logger.warning(f'Those are mail entities you search {final_res}, and mail index to check {agg_results_mail_index}')
         Map.write_response(path_to_agg_answer, final_res)
     def parse_arg(self):
         if self.arg[0] is None:
