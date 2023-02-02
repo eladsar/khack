@@ -50,26 +50,47 @@ class Map:
         # res = process_multi(partial(self.func, question=self.question['question']), self.data, run_type='map')
 
         agg_results = []
-        if self.data.empty:
+        if "precedent_question" in self.data.columns:
+            data_temp = self.data[self.data['precedent_question']==1]
+        else:
+            data_temp = self.data
+        if data_temp.empty:
             logger.info(f'The Data is empty for question: {self.question["question"]}\nExit process')
             exit(0)
-        for idx, row in tqdm(self.data.iterrows()):
+        for idx, row in tqdm(data_temp.iterrows()):
             tmp_res = self.client.yes_or_no(question=self.question['question'], text=row['body'])
             agg_results.append(tmp_res)
         # stay only with yes answer
-        res = [i for i, val in enumerate(agg_results) if val]
+        # res = [i for i, val in enumerate(agg_results) if val]
+        if len(data_temp) != len(self.data):
+            self.data.loc[self.data['precedent_question']==1, 'precedent_question'] = agg_results
+        else:
+            self.data['precedent_question'] = agg_results
         path_to_agg_answer = self.question['path'] /  (self.question['id'].hex + '.pkl')
-        Map.write_response(path_to_agg_answer, res)
+        Map.write_response(path_to_agg_answer, self.data['precedent_question'].tolist())
         return path_to_agg_answer
 
     def map_reduce_mail_entities_question(self):
         # res = process_multi(self.func, self.data, run_type='map')
+        if "precedent_question" in self.data.columns:
+            data_temp = self.data[self.data['precedent_question']==1]
+        else:
+            data_temp = self.data
+        if data_temp.empty:
+            logger.info(f'The Data is empty for mail entity question\nExit process')
+            exit(0)
         agg_results = []
-        for idx, row in self.data.iterrows():
-            tmp_res = self.client.mail_entities(text=row['body'])
+        for idx, row in data_temp.iterrows():
+            format_question_test = f"from: {row['from']}\nto: {row['to']}\nbody: {row['body']}"
+            tmp_res = self.client.mail_entities(text=format_question_test)
             agg_results.append(tmp_res)
-        final_res = ','.join(agg_results)
+        final_res = [j for i in agg_results for j in i]
+        # if len(data_temp) != len(self.data):
+        #     self.data.loc[self.data['precedent_question']==1 , 'precedent_question'] = agg_results
+        # else:
+        #     self.data['precedent_question'] = agg_results
         path_to_agg_answer = self.question['path'] / self.question['id']
+        logger.info(f'Those are mail entities you search {final_res}')
         Map.write_response(path_to_agg_answer, final_res)
     def parse_arg(self):
         if self.arg[0] is None:
@@ -80,7 +101,7 @@ class Map:
                 if isinstance(df, list):
                     if len(df) == 0:
                         return
-                    self.data = self.data.iloc[df]
+                    self.data['precedent_question'] = df
                 elif isinstance(df, str):
                     self.arg = df
             else:

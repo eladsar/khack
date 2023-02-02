@@ -38,6 +38,7 @@ def fake_dataset(df):
           "Let's make sure that these transactions don't appear on the books.",
           "Can we make this transaction look more favorable on the books?",
           "Let's make sure that we don't get caught for this accounting fraud.",
+           "I don't want these emails to be seen by the authorities. Can you help me delete them?"
           ]
     qs2 = ["I think you will be interested in the stock movement of Enron.",
            "We need to sell all of our Enron stock before it's too late.",
@@ -53,11 +54,11 @@ def fake_dataset(df):
     for i in range(len(qs1)):
         df.at[i, "body"] = qs1[i]
 
-    for i in range(5, 5+len(qs2)):
-        df.at[i, "body"] = qs2[i-5]
+    for i in range(6, 6+len(qs2)):
+        df.at[i, "body"] = qs2[i-6]
 
-    for i in range(10, 10+len(qs3)):
-        df.at[i, "body"] = qs3[i-10]
+    for i in range(11, 11+len(qs3)):
+        df.at[i, "body"] = qs3[i-11]
 
 
 if __name__ == '__main__':
