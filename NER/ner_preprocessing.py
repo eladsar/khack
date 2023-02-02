@@ -85,13 +85,14 @@ def generate_prompt(target, n_shot, min_tokens, min_ner):
     return prompt
 
 def parse_response(response):
-    response =  response['choices'][0]['text'].split(';')
+    response = response['choices'][0]['text'].split(';')
     results_dict = {}
     for section in response:
         if not section:
             continue
         k, v = section.split('-')
-        results_dict[k.strip()] = [el.strip() for el in v.split(',')]
+        k = k.strip()
+        results_dict[k] = [el.strip() for el in v.split(',')]
     return results_dict
 
 
