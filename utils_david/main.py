@@ -4,22 +4,8 @@ import pandas as pd
 from questions import QuestionsType, get_question_func
 from questions import YesNoNextStep, MailEntitiesNextStep
 from connect import OpenAI
+import random
 ROOT = '/home/hackathon_2023/'
-
-test_text = "Immediately on landing in Jaffa, 7 September 1906, Ben Gurion set off,"
-" on foot, in a group of fourteen, to Petah Tikva.[19][20] "
-"It was the largest of the 13 Jewish agricultural settlements and consisted of 80 households"
-" with a population of nearly 1500;"
-" of these around 200 were Second Aliyah pioneers like Ben Gurion."
-" He found work as a day labourer, waiting each morning hoping to be chosen by an overseer."
-" Jewish workers found it difficult competing with local villagers who were more skilled"
-" and prepared to work for less. Ben Gurion was shocked at the number of Arabs employed."
-" In November he caught malaria and the doctor advised he return to Europe."
-" By the time he left Petah Tikva in summer of 1907 he had worked an average 10 days a month"
-" which frequently left him with no money for food.[21][22]"
-" He wrote long letters in Hebrew to his father and friends. "
-"They rarely revealed how difficult life was. Others who had come from Płońsk"
-" were writing about tuberculosis, cholera and people dying of hunger.[23]"
 
 
 def get_data(path=None, limit=-1):
@@ -60,6 +46,17 @@ def fake_dataset(df):
     for i in range(11, 11+len(qs3)):
         df.at[i, "body"] = qs3[i-11]
 
+def som_filtering(df):
+    vip = ["kenneth lay", "jeffrey skilling", "andrew fastow"]
+    # cond = (df['x_from'].str.contains('kenneth')) | (df['x_from'].str.contains('jeffrey')) |\
+    #        (df['x_from'].str.contains('andrew')) | (df['x_to'].str.contains('kenneth')) |\
+    #         (df['x_to'].str.contains('jeffrey')) | (df['x_to'].str.contains('andrew'))
+    # df = df[cond]
+    oi= OpenAI(api_key=Flow.get_token_from_path(Path(ROOT)))
+    df_to_sum = df[df['body'].str.len()>2000]
+    for i, val in df_to_sum.iterrows():
+        oi.summary(val['body'], n_words=100)
+    return df
 
 if __name__ == '__main__':
     question1 = {"type": QuestionsType.YESNO, "question": 'Does the text suggest criminal activity?', 'next_step': YesNoNextStep}
@@ -68,10 +65,12 @@ if __name__ == '__main__':
     question4 = {"type": QuestionsType.MAIL_ENTITIES, 'next_step': MailEntitiesNextStep}
     questions = [question1, question2, question3, question4]
     add_question_func(questions)
-    # mails = get_data()
+    mails = get_data()
+    # test_mail = som_filtering(mails)
     # raise Exception
-    test_mail = pd.read_csv('test_mail.csv')[0:20]
-    fake_dataset(test_mail)
+    # test_mail = pd.read_parquet('/home/hackathon_2023/david/enron_filtered_10000_processed.parquet')
+    test_mail = som_filtering(mails)
+    # fake_dataset(test_mail)
     my_flow = Flow.from_questions("enron_investigation", questions)
     my_flow.build_flow()
     my_flow.start(test_mail)

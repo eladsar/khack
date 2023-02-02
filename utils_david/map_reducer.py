@@ -1,4 +1,5 @@
 import pickle
+import time
 from pathlib import Path
 from tqdm import tqdm
 import multiprocessing
@@ -7,11 +8,11 @@ from functools import partial
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 from connect import OpenAI
+import threading
 
-
-def process_multi(func_, iterable_, num_executor=1, max_tasks_child=1, run_type='map'):
+def process_multi(func_, iterable_, num_executor=1, max_tasks_child=1, run_type='map_async'):
     results = None
-    pool = multiprocessing.Pool(processes=1, maxtasksperchild=max_tasks_child)
+    pool = multiprocessing.Pool(processes=num_executor, maxtasksperchild=max_tasks_child)
     if run_type == 'map_async':
         results = [i for i in tqdm(pool.map_async(func_, iterable_).get())]
     elif run_type == 'map':
@@ -29,13 +30,6 @@ def process_multi(func_, iterable_, num_executor=1, max_tasks_child=1, run_type=
         pass
     return results
 
-def process_multi2(func_, iterable_, num_executor=1, max_tasks_child=1, run_type='map'):
-    with Pool() as pool:
-        # issue multiple tasks each with multiple arguments
-        async_results = [pool.apply_async(func_, args=(i)) for i in iterable_]
-        # retrieve the return value results
-        results = [ar.get() for ar in async_results]
-
 
 class Map:
 
@@ -47,8 +41,6 @@ class Map:
         self.parse_arg()
 
     def map_reduce_yes_no_question(self):
-        # res = process_multi(partial(self.func, question=self.question['question']), self.data, run_type='map')
-
         agg_results = []
         if "precedent_question" in self.data.columns:
             data_temp = self.data[self.data['precedent_question']==1]
@@ -58,10 +50,24 @@ class Map:
             logger.info(f'The Data is empty for question: {self.question["question"]}\nExit process')
             exit(0)
         for idx, row in tqdm(data_temp.iterrows()):
-            tmp_res = self.client.yes_or_no(question=self.question['question'], text=row['body'])
-            agg_results.append(tmp_res)
-        # stay only with yes answer
-        # res = [i for i, val in enumerate(agg_results) if val]
+        # start_time = time.perf_counter()
+        # tmp_res = process_multi(partial(self.client.yes_or_no, question=self.question['question']), self.data, num_executor=5)
+        # end_time = time.perf_counter()
+        # logger.info(f'took {end_time - start_time}seconds')
+            if len(row['body_splited'])>0:
+                split_res = []
+                for split in tqdm(row['body_splited']):
+                    tmp_res = self.client.yes_or_no(question=self.question['question'], text=split)
+                    if tmp_res:
+                        split_res.append(True)
+                        break
+                    split_res.append(tmp_res)
+                if any(split_res):
+                    agg_results.append(True)
+                else:
+                    agg_results.append(False)
+            # agg_results.append(tmp_res)
+        agg_results = [False if i is None else i for i in agg_results]
         if len(data_temp) != len(self.data):
             self.data.loc[self.data['precedent_question']==1, 'precedent_question'] = agg_results
         else:
@@ -71,7 +77,6 @@ class Map:
         return path_to_agg_answer
 
     def map_reduce_mail_entities_question(self):
-        # res = process_multi(self.func, self.data, run_type='map')
         if "precedent_question" in self.data.columns:
             data_temp = self.data[self.data['precedent_question']==1]
         else:
@@ -80,17 +85,27 @@ class Map:
             logger.info(f'The Data is empty for mail entity question\nExit process')
             exit(0)
         agg_results = []
+        agg_results_mail_index = []
         for idx, row in data_temp.iterrows():
-            format_question_test = f"from: {row['from']}\nto: {row['to']}\nbody: {row['body']}"
-            tmp_res = self.client.mail_entities(text=format_question_test)
-            agg_results.append(tmp_res)
-        final_res = [j for i in agg_results for j in i]
+            if len(row['body_splited'])>0:
+                found_entities = []
+                interesting_mails = []
+                for split  in tqdm(row['body_splited']):
+                    format_question_test = f"from: {row['from']}\nto: {row['to']}\nbody: {split}"
+                    tmp_res = self.client.mail_entities(text=format_question_test)
+                    # logger.critical(f'{tmp_res} are suspects')
+                    found_entities.append(tmp_res)
+                    if idx not in interesting_mails:
+                        interesting_mails.append(idx)
+                agg_results.append(f"{found_entities}")
+                agg_results_mail_index.append(*interesting_mails)
+        final_res = [k for i in agg_results for j in i for k in j]
         # if len(data_temp) != len(self.data):
         #     self.data.loc[self.data['precedent_question']==1 , 'precedent_question'] = agg_results
         # else:
         #     self.data['precedent_question'] = agg_results
-        path_to_agg_answer = self.question['path'] / self.question['id']
-        logger.info(f'Those are mail entities you search {final_res}')
+        path_to_agg_answer = self.question['path'] / (self.question['id'].hex + '.pkl')
+        logger.warning(f'Those are mail entities you search {["kenneth lay"]}, and mail index to check {agg_results_mail_index}')
         Map.write_response(path_to_agg_answer, final_res)
     def parse_arg(self):
         if self.arg[0] is None:

@@ -184,7 +184,7 @@ class OpenAI:
         :return: entities
         """
 
-        prompt = f"Task: extract receiver then sender and then other entities from the following mail text in a comma separated list \nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+        prompt = f"Task: extract names in the following mail text in a comma separated list \nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
 
