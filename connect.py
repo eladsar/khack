@@ -133,9 +133,44 @@ class OpenAI:
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text.lower().strip()
+        res = res.split(" ")[0]
 
         i = pd.Series(['no', 'yes']).apply(partial(get_edit_ratio, s2=res)).idxmax()
+        # print(res)
         return bool(i)
+
+    def names_of_people(self, text, **kwargs):
+        """
+        Extract names of people from a text
+        :param text: text to extract names from
+        :param kwargs: additional arguments for the ask function
+        :return: list of names
+        """
+        prompt = f"Task: extract names of people from the following text, return in a list of comma separated values\nText: {text}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text
+
+        res = res.strip().split(",")
+
+        return res
+
+    def answer_email(self, input_email_thread, responder_from, receiver_to, **kwargs):
+        """
+        Answer a given email thread as an chosen entity
+        :param input_email_thread_test: given email thread to answer to
+        :param responder_from: chosen entity name which will answer the last mail from the thread
+        :param receiver_to: chosen entity name which will receive the generated mail
+        :param kwargs: additional arguments for the prompt
+        :return: response mail
+        """
+
+        prompt = f"{input_email_thread}\n---generate message---\nFrom: {responder_from}To: {receiver_to}\n\n###\n\n"
+        # prompt = f"Text: {text}\nTask: answer the following question with yes or no\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        res = self.ask(prompt, **kwargs)
+        res = res.choices[0].text  # response email from model
+        return res
 
     def classify(self, text, classes, **kwargs):
         """
