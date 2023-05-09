@@ -39,6 +39,7 @@ class OpenAI:
 
         openai.api_key = api_key
         openai.organization = organization_id
+        self._models = None
 
     def update_usage(self, response):
 
@@ -48,8 +49,8 @@ class OpenAI:
         self.usage["completion_tokens"] += response["completion_tokens"]
         self.usage["total_tokens"] += response["prompt_tokens"] + response["completion_tokens"]
 
-    def chat(self, message, name=None, system=None, system_name=None, reset_chat=False, temperature=1, top_p=1, n=1,
-             stream=False, stop=None, max_tokens=int(2**16), presence_penalty=0, frequency_penalty=0.0,
+    def chat(self, message, name=None, system=None, system_name=None, reset_chat=False, model=None, temperature=1,
+             top_p=1, n=1, stream=False, stop=None, max_tokens=None, presence_penalty=0, frequency_penalty=0.0,
              logit_bias=None):
 
         '''
@@ -82,24 +83,34 @@ class OpenAI:
 
         messages.extend(self.chat_history)
 
-        message = {'role': 'user', 'message': message}
+        message = {'role': 'user', 'content': message}
         if name is not None:
             message['name'] = name
 
         messages.append(message)
 
-        response = openai.Completion.create(
-            engine=self.model,
+        kwargs = {}
+        if logit_bias is not None:
+            kwargs['logit_bias'] = logit_bias
+        if max_tokens is not None:
+            kwargs['max_tokens'] = max_tokens
+        if stop is not None:
+            kwargs['stop'] = stop
+
+        if model is None:
+            model = self.model
+
+        response = openai.ChatCompletion.create(
+            model=model,
             messages=messages,
             temperature=temperature,
             top_p=top_p,
             n=n,
             stream=stream,
             stop=stop,
-            max_tokens=max_tokens,
             presence_penalty=presence_penalty,
             frequency_penalty=frequency_penalty,
-            logit_bias=logit_bias
+            **kwargs
         )
 
         self.update_usage(response)
@@ -107,6 +118,61 @@ class OpenAI:
         self.chat_history.append(response_message)
 
         return response
+
+    @property
+    def is_chat(self):
+        chat_models = ['gpt-4', 'gpt-3.5-turbo']
+        if any([m in self.model for m in chat_models]):
+            return True
+        return False
+
+    def docstring(self, text, element_type, name=None, docstring_format=None, parent=None, parent_name=None,
+                  parent_type=None, children=None, children_type=None, children_name=None, **kwargs):
+
+        if docstring_format is None:
+            docstring_format = f"in \"{docstring_format}\" format, "
+        else:
+            docstring_format = ""
+
+        prompt = f"Task: write a full python docstring {docstring_format}for the following {element_type}\n\n" \
+                 f"========================================================================\n\n" \
+                 f"{text}\n\n" \
+                 f"========================================================================\n\n"
+
+        if parent is not None:
+            prompt = f"{prompt}" \
+                     f"where is parent {parent_type}: {parent_name}, has the following docstring\n\n" \
+                     f"========================================================================\n\n" \
+                     f"{parent}\n\n" \
+                     f"========================================================================\n\n"
+
+        if children is not None:
+            for i, (c, cn, ct) in enumerate(zip(children, children_name, children_type)):
+                prompt = f"{prompt}" \
+                         f"and its #{i} child: {ct} named {cn}, has the following docstring\n\n" \
+                         f"========================================================================\n\n" \
+                         f"{c}\n\n" \
+                         f"========================================================================\n\n"
+
+        prompt = f"{prompt}" \
+                 f"Response: \"\"\"\n{{docstring text here (do not add anything else)}}\n\"\"\""
+
+        if self.is_chat:
+            try:
+                res = self.chat(prompt, **kwargs)
+            except:
+                try:
+                    print(f"{name}: switching to gpt-4 model")
+                    res = self.chat(prompt, model='gpt-4', **kwargs)
+                except:
+                    print(f"{name}: error in response")
+                    res = None
+        else:
+            res = self.ask(prompt, **kwargs)
+
+        # res = res.choices[0].text
+
+        return res
 
     def file_list(self):
         return openai.File.list()
@@ -116,9 +182,12 @@ class OpenAI:
             model = self.model
         return openai.Engine.retrieve(id=model)
 
-    @staticmethod
-    def models():
-        return openai.Model.list()
+    @property
+    def models(self):
+        if self._models is None:
+            models = openai.Model.list()
+            self._models = {m.id: m for m in models.data}
+        return self._models
 
     def embedding(self, text, model=None):
         if model is None:
