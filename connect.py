@@ -195,7 +195,7 @@ class OpenAI:
 
         return res
 
-    def yes_or_no(self, text, question, **kwargs):
+    def yes_or_no(self, question, text=None, **kwargs):
         """
         Answer a yes or no question
         :param text: text to answer the question from
@@ -203,7 +203,13 @@ class OpenAI:
         :param kwargs: additional arguments for the ask function
         :return: answer
         """
-        prompt = f"Text: {text}\nTask: answer the following question with yes or no\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
+
+        if text is None:
+            preface = ''
+        else:
+            preface = f"Text: {text}\n"
+
+        prompt = f"{preface}Task: answer the following question with yes or no\nQuestion: {question}\nResponse: \"\"\"\n{{text input here}}\n\"\"\""
 
         res = self.ask(prompt, **kwargs)
         res = res.choices[0].text.lower().strip()
