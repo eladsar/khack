@@ -21,7 +21,6 @@ class OpenAI:
     def __init__(self, model="text-davinci-003", api_key=None, organization_id='org-7PVKrNOMnq1PvOkuHr1XJX88'):
 
         if api_key is None:
-
             path = pathlib.Path("openai_api_key.pkl")
             if path.exists():
                 api_key = pd.read_pickle("openai_api_key.pkl")
@@ -32,9 +31,82 @@ class OpenAI:
         self.model = model
         self.organization_id = organization_id
         self.api_key = api_key
+        self.usage = {"prompt_tokens": 0,
+                      "completion_tokens": 0,
+                      "total_tokens": 0}
+
+        self.chat_history = []
 
         openai.api_key = api_key
         openai.organization = organization_id
+
+    def update_usage(self, response):
+
+        response = response['usage']
+
+        self.usage["prompt_tokens"] += response["prompt_tokens"]
+        self.usage["completion_tokens"] += response["completion_tokens"]
+        self.usage["total_tokens"] += response["prompt_tokens"] + response["completion_tokens"]
+
+    def chat(self, message, name=None, system=None, system_name=None, reset_chat=False, temperature=1, top_p=1, n=1,
+             stream=False, stop=None, max_tokens=int(2**16), presence_penalty=0, frequency_penalty=0.0,
+             logit_bias=None):
+
+        '''
+
+        :param name:
+        :param system:
+        :param system_name:
+        :param reset_chat:
+        :param temperature:
+        :param top_p:
+        :param n:
+        :param stream:
+        :param stop:
+        :param max_tokens:
+        :param presence_penalty:
+        :param frequency_penalty:
+        :param logit_bias:
+        :return:
+        '''
+
+        if reset_chat:
+            self.chat_history = []
+
+        messages = []
+        if system is not None:
+            system = {'system': system}
+            if system_name is not None:
+                system['system_name'] = system_name
+            messages.append(system)
+
+        messages.extend(self.chat_history)
+
+        message = {'role': 'user', 'message': message}
+        if name is not None:
+            message['name'] = name
+
+        messages.append(message)
+
+        response = openai.Completion.create(
+            engine=self.model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p,
+            n=n,
+            stream=stream,
+            stop=stop,
+            max_tokens=max_tokens,
+            presence_penalty=presence_penalty,
+            frequency_penalty=frequency_penalty,
+            logit_bias=logit_bias
+        )
+
+        self.update_usage(response)
+        response_message = response['choices'][0]['message']
+        self.chat_history.append(response_message)
+
+        return response
 
     def file_list(self):
         return openai.File.list()
@@ -86,6 +158,8 @@ class OpenAI:
           logprobs=logprobs,
           echo=echo
         )
+
+        self.update_usage(response)
 
         return response
 
