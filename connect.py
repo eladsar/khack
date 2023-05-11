@@ -160,7 +160,8 @@ class OpenAI:
         if self.is_chat:
             try:
                 res = self.chat(prompt, **kwargs)
-            except:
+            except Exception as e:
+                print(f"Error in response: {e}")
                 try:
                     print(f"{name}: switching to gpt-4 model")
                     res = self.chat(prompt, model='gpt-4', **kwargs)
